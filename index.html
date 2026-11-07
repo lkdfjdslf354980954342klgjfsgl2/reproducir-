@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mi Piano - Partituras con Foto</title>
+<style>
+  :root{--lila:#7b1fa2;--azul:#1565c0;--verde:#2e7d32;--naranja:#ff8f00;--fondo:#f8f5ff}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:system-ui,Georgia,serif;background:var(--fondo);margin:0;padding:0;color:#222}
+  header{position:sticky;top:0;z-index:20;background:#1a1a2e;color:white;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+  header h1{font-size:19px;margin:0} header p{font-size:12px;margin:0;opacity:.8}
+  .wrap{max-width:760px;margin:0 auto;padding:10px;padding-bottom:90px}
+  .card{background:white;border-radius:16px;padding:12px;margin:10px 0;box-shadow:0 4px 16px rgba(0,0,0,.07);border:1px solid #eee}
+  button{padding:10px 14px;margin:4px;border:none;border-radius:999px;font-size:14px;cursor:pointer}
+  .play{background:var(--verde);color:white;font-size:18px;padding:14px 26px;font-weight:bold}
+  .stop{background:#eee}
+  .toggle{background:var(--lila);color:white;font-weight:bold}
+  .toggle2{background:var(--naranja);color:white;font-weight:bold}
+  .guia{background:var(--azul);color:white;font-weight:bold}
+  .guia.on{background:#c62828}
+  .voz{background:#00897b;color:white;font-weight:bold}
+  .voz.off{background:#ddd;color:#333}
+  .sel{border:2px solid #ddd;background:#f7f7f7}
+  .sel.active{background:var(--azul);color:white;border-color:var(--azul);font-weight:bold}
+  .sel2.active{background:var(--lila);color:white;border-color:var(--lila)}
+  .acc{background:#fff;border:2px solid #333;font-size:20px;padding:8px 14px}
+  .acc.active{background:#ffca28}
+  .chip{background:#e3f2fd;border-radius:999px;padding:6px 10px;font-size:13px;display:inline-block;margin:3px}
+  .note-now{font-size:18px;min-height:28px;color:var(--verde);font-weight:bold}
+  .voz-text{font-size:14px;background:#e0f2f1;border-radius:12px;padding:9px}
+  .paso,.edit{font-size:15px;border-radius:12px;padding:10px;margin:8px 0;display:none}
+  .paso{background:#e3f2fd}.paso.show{display:block}.edit{background:#fff8e1;border:2px solid #ffca28}.edit.show{display:block}
+  .teoria{font-size:12px;background:#fff3e0;border-radius:10px;padding:8px;line-height:1.5}
+  input[type=range]{width:170px} input[type=file]{display:none}
+  /* BIBLIOTECA */
+  .gal{display:flex;gap:10px;overflow-x:auto;padding:6px 2px;scroll-snap-type:x mandatory}
+  .lib-item{min-width:150px;max-width:160px;background:#fff;border:2px solid #eee;border-radius:14px;overflow:hidden;scroll-snap-align:start;cursor:pointer;flex-shrink:0}
+  .lib-item.active{border-color:var(--lila);box-shadow:0 0 0 2px var(--lila)}
+  .lib-item img{width:100%;height:110px;object-fit:cover;display:block;background:#f5f5f5}
+  .lib-item div{padding:6px;font-size:13px}
+  .lib-item button{padding:5px 9px;font-size:12px}
+  /* VISOR FOTO - SCROLL H/V */
+  .viewer{overflow:auto;max-height:420px;background:#fff;border-radius:12px;border:1px solid #ddd;touch-action:pan-x pan-y;position:relative}
+  .viewer img{max-width:none;width:100%;min-width:600px;display:block}
+  .viewer .overlay{position:absolute;inset:0;pointer-events:none}
+  .nav-row{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+  .nav-row button{font-size:18px;padding:10px 16px}
+  /* PARTITURA */
+  .partitura{display:none;background:linear-gradient(135deg,#fff9c4,#e3f2fd 30%,#fce4ec 60%,#e8f5e9);border:3px solid gold;border-radius:14px;padding:12px;margin:10px 0}
+  .partitura.show{display:block}
+  .flores{text-align:center;font-size:20px}
+  .svg-wrap{background:rgba(255,255,255,.96);border-radius:10px;padding:6px;overflow:auto;max-height:380px;touch-action:pan-x pan-y}
+  .svg-wrap svg{min-width:700px;width:100%;height:auto;display:block}
+  .staff-note{cursor:grab;touch-action:none}.staff-note.selected ellipse{fill:#d32f2f !important}
+  /* PIANO - SCROLL H */
+  .piano-box{display:none}.piano-box.show{display:block}
+  .piano-wrap{overflow-x:auto;padding:16px 5px 8px;background:#f5f5f5;border-radius:12px;touch-action:pan-x}
+  .piano{position:relative;display:flex;height:170px;min-width:680px;gap:2px;user-select:none}
+  .white-key{flex:1;background:linear-gradient(#fff,#f0f0f0);border:1px solid #999;border-radius:0 0 8px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;font-size:11px;position:relative}
+  .white-key.active{background:#ffe082}
+  .black-key{position:absolute;top:0;width:26px;height:95px;background:linear-gradient(#4a148c,#7b1fa2);border:1.5px solid #ffca28;border-radius:0 0 7px 7px;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:5px;font-size:9px;color:#ffecb3}
+  .num-badge{background:#d32f2f;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold}
+  .hand{position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:26px;z-index:5;pointer-events:none}
+  .key-next{outline:3px solid #ff5722 !important}
+  /* MODO LIMPIO - OCULTA TODO */
+  body.limpio .ocultable{display:none !important}
+  .fab{position:fixed;right:14px;bottom:16px;z-index:50;background:#1a1a2e;color:white;border-radius:999px;padding:12px 16px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .hint{font-size:12px;color:#777}
+</style>
+</head>
+<body>
+<header><div><h1>🎹 Mi Piano</h1><p>Morning + Tus fotos • GitHub Pages</p></div><button onclick="toggleLimpio()" id="btnLimpio">👁️ Ocultar botones</button></header>
+<div class="wrap">
+  <!-- BIBLIOTECA -->
+  <div class="card ocultable">
+    <b>📚 Mi Biblioteca de Partituras</b><br>
+    <span class="hint">Sacá foto a un libro, importá imagen o PDF. Queda guardada en este celu. Tocá una para abrirla.</span><br>
+    <button class="toggle2" onclick="document.getElementById('inputFoto').click()">📸 Sacar foto</button>
+    <button class="toggle" onclick="document.getElementById('inputArchivo').click()">📁 Importar foto / PDF</button>
+    <button onclick="usarEjemplo()">🎼 Usar Morning de ejemplo</button>
+    <input id="inputFoto" type="file" accept="image/*" capture="environment" onchange="importar(this.files[0])">
+    <input id="inputArchivo" type="file" accept="image/*,application/pdf" onchange="importar(this.files[0])">
+    <div class="gal" id="galeria"></div>
+    <div id="libInfo" class="hint">Tenés 1 partitura: Morning (ejemplo). Agregá la tuya.</div>
+  </div>
+
+  <!-- VISOR FOTO REAL -->
+  <div class="card" id="cardVisor">
+    <b>🖼️ Partitura actual: <span id="tituloActual">Morning - Grieg</span></b>
+    <div class="nav-row ocultable">
+      <button onclick="moverFoto(-1)">◀ Compás anterior</button>
+      <button onclick="moverFoto(1)">Compás siguiente ▶</button>
+      <button onclick="toggleZoom()">🔍 Zoom</button>
+    </div>
+    <div class="viewer" id="viewer">
+      <img id="fotoImg" src="" alt="Foto de partitura" style="display:none">
+      <div id="fotoPlaceholder" style="padding:30px;text-align:center;color:#999">📸 Acá se ve tu foto real.<br>Si es Morning, abajo tenés el pentagrama dibujado exacto.<br>Si es otra, usá “Mapear foto”.</div>
+    </div>
+    <div class="hint ocultable">Deslizá con el dedo para scrollear horizontal y vertical. Con teclado: ← → ↑ ↓. Con la ruedita del mouse también.</div>
+    <div class="ocultable" style="margin-top:8px">
+      <label><input type="checkbox" id="chkMapear" onchange="toggleMapear()"> ✏️ Mapear foto: tocar la foto para agregar nota, luego tocar el piano para asignarle sonido</label>
+      <div id="mapeoInfo" class="chip" style="display:none">Tocaste en la foto. Ahora tocá una tecla del piano para guardar esa nota.</div>
+    </div>
+  </div>
+
+  <!-- REPRODUCIR POR FRAGMENTOS -->
+  <div class="card ocultable">
+    <div class="note-now" id="now">Elegí mano y tocá ▶</div>
+    <div class="voz-text" id="vozText">🔊 Voz activada. Te digo nota + línea/espacio + sostenido/bemol/natural.</div>
+    <button class="play" onclick="playSong()">▶ Tocar fragmento</button>
+    <button class="stop" onclick="stopSong()">⏹ Parar</button>
+    <button onclick="toggleLoop()" id="btnLoop">🔁 Bucle: OFF</button><br>
+    <b>🎯 Fragmento por compases:</b><br>
+    Desde compás <input type="number" id="desde" value="1" min="1" max="4" style="width:55px"> Hasta <input type="number" id="hasta" value="4" min="1" max="4" style="width:55px">
+    <button onclick="setFragmento(1,1)">Solo 1</button><button onclick="setFragmento(2,2)">Solo 2</button><button onclick="setFragmento(3,4)">3-4</button><button onclick="setFragmento(1,4)">Todo</button>
+    <br><label>Velocidad música</label> <input type="range" id="speed" min="0.5" max="1.8" step="0.1" value="1" oninput="updateSpeed(this.value)"><span id="speedLabel">Normal</span>
+    <br><button class="voz" id="btnVoz" onclick="toggleVoz()">🔊 Voz: ON</button>
+    <button onclick="pronunciarSeleccion()">🗣️ Pronunciar nota</button>
+    <button onclick="pronunciarAcordeActual()">🗣️ Pronunciar acorde</button>
+    <br><br><b>✋ Mano:</b><br>
+    <button class="sel active" id="btnDer" onclick="setMano('derecha')">🎵 Derecha</button>
+    <button class="sel" id="btnIzq" onclick="setMano('izquierda')">🎹 Izquierda</button>
+    <button class="sel" id="btnAmbas" onclick="setMano('ambas')">👏 Ambas</button>
+    <br><b>🎼 Ver:</b><br>
+    <button class="sel sel2 active" id="btnNotas" onclick="setModo('notas')">♪ Notas</button>
+    <button class="sel sel2" id="btnAcordes" onclick="setModo('acordes')">🎼 Acordes</button>
+    <button class="sel sel2" id="btnTodo" onclick="setModo('todo')">🎶 Notas + Acordes</button>
+    <div class="teoria">📐 <b>Fa recalculado:</b> Sol2=1ra línea • La2=1er espacio • Si2=2da línea • Do3=2do espacio • Re3=3ra línea • Mi3=3er espacio • <b>Fa3=4ta línea</b> • <b>Sol3=4to espacio</b> • La3=5ta línea. <b>Sol:</b> Mi4=1ra línea • Fa4=1er espacio • Sol4=2da línea...</div>
+  </div>
+
+  <div class="card ocultable">
+    <div class="edit" id="editBox">
+      <div>✏️ <b id="editNota">Mi5</b> - <span id="editPos"></span> - <span id="editAcc"></span></div>
+      <button class="acc" id="accSharp" onclick="setAcc('#')">♯ Sostenido</button>
+      <button class="acc" id="accFlat" onclick="setAcc('b')">♭ Bemol</button>
+      <button class="acc" id="accNat" onclick="setAcc('')">♮ Natural</button>
+      <button onclick="pronunciarSeleccion()">🔊 Escuchar</button>
+      <button onclick="resetNotes()">🔄 Original</button>
+      <div class="hint">Arrastrá la nota para cambiar de línea/espacio.</div>
+    </div>
+    <button class="toggle2" id="btnPartitura" onclick="togglePartitura()">🎼 ▼ Ver Partitura dibujada</button>
+    <button class="toggle" id="btnPiano" onclick="togglePiano()">🎹 ▼ Mostrar Piano</button>
+    <button class="guia" id="btnGuia" onclick="toggleGuia()">👆 Guía Doble + Voz</button>
+    <div class="paso" id="pasoBox">
+      <div><b id="pasoNum">1 / 22</b> - <b id="pasoNota">Mi5</b> - Compás <b id="pasoCompas">1</b></div>
+      <div id="pasoDedo"></div><div id="pasoDesc"></div>
+      <button onclick="prevGuide()">👈 Anterior</button><button onclick="nextGuide()">Siguiente 👉</button><button onclick="pronunciarSeleccion()">🔊 Repetir</button>
+    </div>
+    <div class="partitura" id="partitura">
+      <div class="flores">🌸 🌿 🌼 🌷 🌻 🦋 🌺</div>
+      <h2 style="text-align:center;margin:0">Morning</h2><p style="text-align:center">from PEER GYNT - Grieg</p>
+      <b>Allegretto pastorale</b>
+      <div class="svg-wrap"><div id="staffContainer"></div></div>
+      <div class="flores">🌷 🌿 🌸 🍃 🌼 🌻 🌺 🌿</div>
+    </div>
+    <div class="piano-box" id="pianoBox"><div class="piano-wrap"><div class="piano" id="piano"></div></div>
+      <div class="nav-row ocultable"><button onclick="scrollPiano(-1)">◀ Piano</button><button onclick="scrollPiano(1)">Piano ▶</button></div>
+    </div>
+  </div>
+  <p class="hint" style="text-align:center">💡 Tip: Apretá 👁️ Ocultar botones para estudiar sin distracciones. Volvé a apretar para mostrar todo. Flechas del teclado: ← → cambian compás, ↑ ↓ scrollean.</p>
+</div>
+<button class="fab" onclick="toggleLimpio()">👁️ Mostrar / Ocultar</button>
+
+<script>
+// ===== ESTADO =====
+let ctx, playing=false, timers=[], speedRate=1, guiaOn=false, guiaIdx=0, manoSel='derecha', modoSel='notas', selected=null, vozOn=true, loopOn=false, limpio=false, zoomOn=false, mapeando=false, puntoMapeo=null;
+let biblioteca=[]; try{ biblioteca=JSON.parse(localStorage.getItem('miPianoLib')||'[]'); }catch(e){ biblioteca=[]; }
+if(!biblioteca.length){ biblioteca=[{id:'morning', nombre:'Morning - Grieg', tipo:'ejemplo', fecha:Date.now()}]; guardarLib(); }
+
+function updateSpeed(v){ speedRate=parseFloat(v); document.getElementById('speedLabel').textContent=v<0.9?'Lento':v>1.1?'Rápido':'Normal'; }
+function ac(){ if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); return ctx; }
+const BASE={'C':261.63,'D':293.66,'E':329.63,'F':349.23,'G':392,'A':440,'B':493.88};
+function freqOf(o){ let f=BASE[o.letter]*Math.pow(2,o.oct-4); if(o.acc==='#') f*=Math.pow(2,1/12); if(o.acc==='b') f*=Math.pow(2,-1/12); return f; }
+function toneObj(o,dur=0.6,when=0,vol=0.25){ const c=ac(); const osc=c.createOscillator(); const g=c.createGain(); osc.type='triangle'; osc.frequency.value=freqOf(o); g.gain.setValueAtTime(0,c.currentTime+when); g.gain.linearRampToValueAtTime(vol,c.currentTime+when+0.01); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+when+dur); osc.connect(g); g.connect(c.destination); osc.start(c.currentTime+when); osc.stop(c.currentTime+when+dur+0.1); highlight(o); }
+function highlight(o){ const n=o.letter+(o.acc==='#'?'#':o.acc==='b'?'b':'')+o.oct; const el=document.querySelector(`[data-note="${n}"]`); if(el){ el.classList.add('active'); setTimeout(()=>el.classList.remove('active'),350); } }
+function stopSong(){ playing=false; timers.forEach(t=>clearTimeout(t)); timers=[]; document.getElementById('now').textContent='Parado'; if(window.speechSynthesis) speechSynthesis.cancel(); }
+function toggleLimpio(){ limpio=!limpio; document.body.classList.toggle('limpio',limpio); document.getElementById('btnLimpio').textContent=limpio?'👁️ Mostrar botones':'👁️ Ocultar botones'; }
+function toggleLoop(){ loopOn=!loopOn; document.getElementById('btnLoop').textContent=loopOn?'🔁 Bucle: ON':'🔁 Bucle: OFF'; }
+function setFragmento(a,b){ document.getElementById('desde').value=a; document.getElementById('hasta').value=b; speak(`Fragmento del compás ${a} al ${b}`); }
+function toggleZoom(){ zoomOn=!zoomOn; const img=document.getElementById('fotoImg'); img.style.transform=zoomOn?'scale(1.6)':'scale(1)'; img.style.transformOrigin='top left'; }
+function scrollPiano(dir){ document.querySelector('.piano-wrap').scrollBy({left:dir*200,behavior:'smooth'}); }
+function moverFoto(dir){ const v=document.getElementById('viewer'); v.scrollBy({left:dir*180,behavior:'smooth'}); let d=parseInt(document.getElementById('desde').value)+dir; d=Math.max(1,Math.min(4,d)); document.getElementById('desde').value=d; document.getElementById('hasta').value=d; speak(`Compás ${d}`); }
+// Teclado PC + celu
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') moverFoto(1); if(e.key==='ArrowLeft') moverFoto(-1); if(e.key==='ArrowDown') document.getElementById('viewer').scrollBy({top:100,behavior:'smooth'}); if(e.key==='ArrowUp') document.getElementById('viewer').scrollBy({top:-100,behavior:'smooth'}); if(e.key===' ') { e.preventDefault(); playing?stopSong():playSong(); } });
+
+// ===== BIBLIOTECA / FOTOS / PDF =====
+function guardarLib(){ localStorage.setItem('miPianoLib',JSON.stringify(biblioteca)); }
+function renderLib(){
+  const g=document.getElementById('galeria'); g.innerHTML='';
+  biblioteca.forEach(item=>{
+    const d=document.createElement('div'); d.className='lib-item'; d.id='lib-'+item.id;
+    d.innerHTML=`${item.img?`<img src="${item.img}">`:`<div style="height:110px;background:linear-gradient(135deg,#fff9c4,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:36px">🎼</div>`}<div><b>${item.nombre}</b><br><small>${item.tipo} • ${new Date(item.fecha).toLocaleDateString()}</small><br><button onclick="event.stopPropagation();abrirLib('${item.id}')">Abrir</button> <button onclick="event.stopPropagation();borrarLib('${item.id}')">🗑️ Borrar</button></div>`;
+    d.onclick=()=>abrirLib(item.id); g.appendChild(d);
+  });
+  document.getElementById('libInfo').textContent=`Tenés ${biblioteca.length} partitura(s) guardadas en este navegador.`;
+}
+function importar(file){
+  if(!file) return;
+  if(file.type==='application/pdf'){ alert('PDF detectado. En GitHub Pages, el PDF se guarda y se abre como vista previa. Para reproducirlo, sacá captura de la página que querés como imagen o usá “Mapear foto”.'); const url=URL.createObjectURL(file); biblioteca.unshift({id:'pdf'+Date.now(),nombre:file.name,tipo:'PDF',img:'',pdf:url,fecha:Date.now()}); guardarLib(); renderLib(); return; }
+  const r=new FileReader(); r.onload=()=>{ const nombre=prompt('Nombre de la partitura:',file.name.replace(/\.[^.]+$/,''))||file.name; biblioteca.unshift({id:'img'+Date.now(),nombre,tipo:'Foto',img:r.result,fecha:Date.now()}); guardarLib(); renderLib(); abrirLib(biblioteca[0].id); speak(`Partitura ${nombre} agregada.`); }; r.readAsDataURL(file);
+}
+function abrirLib(id){
+  const it=biblioteca.find(x=>x.id===id); if(!it) return;
+  document.querySelectorAll('.lib-item').forEach(e=>e.classList.remove('active')); const el=document.getElementById('lib-'+id); if(el) el.classList.add('active');
+  document.getElementById('tituloActual').textContent=it.nombre;
+  const img=document.getElementById('fotoImg'); const ph=document.getElementById('fotoPlaceholder');
+  if(it.img){ img.src=it.img; img.style.display='block'; ph.style.display='none'; } else if(it.pdf){ window.open(it.pdf,'_blank'); img.style.display='none'; ph.style.display='block'; ph.textContent='PDF abierto en otra pestaña.'; } else { img.style.display='none'; ph.style.display='block'; ph.innerHTML='🎼 <b>Morning - Partitura dibujada abajo</b><br>Esta es la de ejemplo, con pentagrama exacto y guía.'; }
+  // Si es Morning, mostrar pentagrama. Si es foto nueva, sugerir mapeo
+  if(id==='morning'){ document.getElementById('partitura').classList.add('show'); } else { speak(`Abierta ${it.nombre}. Tocá Mapear foto si querés asignarle sonidos.`); }
+}
+function borrarLib(id){
+  if(!confirm('¿Borrar esta partitura?')) return;
+  biblioteca=biblioteca.filter(x=>x.id!==id); guardarLib(); renderLib();
+  if(!biblioteca.length){ biblioteca=[{id:'morning',nombre:'Morning - Grieg',tipo:'ejemplo',fecha:Date.now()}]; guardarLib(); renderLib(); }
+  abrirLib(biblioteca[0].id);
+}
+function usarEjemplo(){ abrirLib('morning'); }
+function toggleMapear(){ mapeando=document.getElementById('chkMapear').checked; document.getElementById('mapeoInfo').style.display=mapeando?'block':'none'; }
+document.getElementById('viewer').addEventListener('click',e=>{
+  if(!mapeando) return;
+  puntoMapeo={x:e.offsetX,y:e.offsetY}; document.getElementById('mapeoInfo').textContent=`Tocaste en la foto (${puntoMapeo.x},${puntoMapeo.y}). Ahora tocá una tecla del piano para guardar esa nota.`;
+  speak('Punto en la foto guardado. Ahora tocá una tecla del piano.');
+});
+renderLib(); abrirLib('morning');
+
+// ===== VOZ =====
+function toggleVoz(){ vozOn=!vozOn; const b=document.getElementById('btnVoz'); b.textContent=vozOn?'🔊 Voz: ON':'🔇 Voz: OFF'; b.classList.toggle('off',!vozOn); if(!vozOn && window.speechSynthesis) speechSynthesis.cancel(); if(vozOn) speak('Voz activada.'); }
+function speak(t){ if(!vozOn) return; if(!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='es-AR'; u.rate=1; const v=speechSynthesis.getVoices().find(x=>x.lang.startsWith('es')); if(v) u.voice=v; speechSynthesis.speak(u); document.getElementById('vozText').textContent='🗣️ "'+t+'"'; }
+function nombreH(o){ return {'C':'Do','D':'Re','E':'Mi','F':'Fa','G':'Sol','A':'La','B':'Si'}[o.letter]; }
+function accH(o){ return o.acc==='#'?'sostenido':o.acc==='b'?'bemol':'natural'; }
+function describirNota(o,clef){ const inf=posInfo(o,clef); return `${nombreH(o)}, ${inf.texto}, ${accH(o)}`; }
+function pronunciarSeleccion(){ if(selected){ const o=selected.hand==='derecha'?melody[selected.idx]:leftFlat()[selected.idx]; speak(describirNota(o,selected.hand==='derecha'?'sol':'fa')); } else if(guiaOn){ speak(describirNota(currentList()[guiaIdx],manoSel==='izquierda'?'fa':'sol')); } }
+function pronunciarAcordeActual(){ const ci=manoSel==='izquierda'?Math.floor(guiaIdx/6):0; const ch=leftChords[ci]; speak(`Acorde ${leftLabels[ci]}. `+ch.map(o=>describirNota(o,'fa')).join('. ')); }
+
+// ===== MODELO =====
+function N(l,o,a){ return {letter:l,oct:o,acc:a}; }
+const ORIG_MELODY=[N('E',5,''),N('F',5,'#'),N('G',5,'#'),N('F',5,'#'),N('E',5,''),N('D',5,'#'),N('E',5,''),N('F',5,'#'),N('G',5,'#'),N('A',5,''),N('G',5,'#'),N('F',5,'#'),N('G',5,'#'),N('A',5,''),N('B',5,''),N('G',5,'#'),N('F',5,'#'),N('E',5,''),N('F',5,'#'),N('E',5,''),N('D',5,'#'),N('E',5,'')];
+let melody=JSON.parse(JSON.stringify(ORIG_MELODY));
+const dedos=['1 Pulgar','2 Índice','3 Mayor','2 Índice','1 Pulgar','1 Pulgar','1 Pulgar','2 Índice','3 Mayor','4 Anular','3 Mayor','2 Índice','3 Mayor','4 Anular','5 Meñique','3 Mayor','2 Índice','1 Pulgar','2 Índice','1 Pulgar','1 Pulgar','1 Pulgar'];
+const compases=[1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4];
+const ORIG_LEFT=[[N('B',2,''),N('E',3,''),N('G',3,'#'),N('B',3,''),N('E',4,''),N('G',3,'#')],[N('B',2,''),N('E',3,''),N('G',3,'#'),N('B',3,''),N('E',4,''),N('G',3,'#')],[N('C',3,'#'),N('F',3,'#'),N('A',3,'#'),N('C',4,'#'),N('F',4,'#'),N('A',3,'#')],[N('F',2,'#'),N('B',2,''),N('D',3,'#'),N('F',3,'#'),N('B',3,''),N('D',3,'#')]];
+let leftChords=JSON.parse(JSON.stringify(ORIG_LEFT));
+const leftFlat=()=>leftChords.flat(); const leftLabels=['Mi Mayor','Mi Mayor','Fa sostenido Mayor','Si Mayor'];
+function togglePiano(){ const b=document.getElementById('pianoBox'); const btn=document.getElementById('btnPiano'); const o=b.classList.toggle('show'); btn.textContent=o?'🎹 ▲ Ocultar Piano':'🎹 ▼ Mostrar Piano'; }
+function togglePartitura(){ const p=document.getElementById('partitura'); const btn=document.getElementById('btnPartitura'); const o=p.classList.toggle('show'); btn.textContent=o?'🎼 ▲ Ocultar Partitura':'🎼 ▼ Ver Partitura'; }
+function setMano(m){ manoSel=m; ['btnDer','btnIzq','btnAmbas'].forEach(id=>document.getElementById(id).classList.remove('active')); document.getElementById(m==='derecha'?'btnDer':m==='izquierda'?'btnIzq':'btnAmbas').classList.add('active'); guiaIdx=0; buildStaff(); if(guiaOn) updateGuide(); }
+function setModo(m){ modoSel=m; ['btnNotas','btnAcordes','btnTodo'].forEach(id=>document.getElementById(id).classList.remove('active')); document.getElementById(m==='notas'?'btnNotas':m==='acordes'?'btnAcordes':'btnTodo').classList.add('active'); buildStaff(); }
+const LETRA={C:0,D:1,E:2,F:3,G:4,A:5,B:6}; const LETRAS=['C','D','E','F','G','A','B'];
+function diatonic(o){ return o.oct*7+LETRA[o.letter]; }
+function yTreble(o){ return 88-(diatonic(o)-diatonic({letter:'E',oct:4}))*6; }
+function yBass(o){ return 218-(diatonic(o)-diatonic({letter:'G',oct:2}))*6; }
+function posInfo(o,clef){
+  const ordinal=['primera','segunda','tercera','cuarta','quinta'];
+  if(clef==='sol'){ const base=diatonic({letter:'E',oct:4}); const diff=diatonic(o)-base; if(diff<0) return {texto:'debajo de la primera línea'}; if(diff>8) return {texto:'encima de la quinta línea'}; const idx=Math.floor(diff/2); return {texto: diff%2===0? `${ordinal[idx]} línea` : `${ordinal[idx]} espacio`}; }
+  else{ const base=diatonic({letter:'G',oct:2}); const diff=diatonic(o)-base; if(diff<0) return {texto:'debajo de la primera línea'}; if(diff>8) return {texto:'encima de la quinta línea'}; const idx=Math.floor(diff/2); return {texto: diff%2===0? `${ordinal[idx]} línea` : `${ordinal[idx]} espacio`}; }
+}
+function posName(o,c){ return posInfo(o,c).texto; }
+function noteName(o){ return o.letter+(o.acc==='#'?'#':o.acc==='b'?'♭':'')+o.oct; }
+function displayAcc(o){ return o.acc==='#'?'♯':o.acc==='b'?'♭':''; }
+function buildStaff(){
+  const showMelody=!(manoSel==='izquierda'&&modoSel!=='todo')&&modoSel!=='acordes';
+  const showChords=!(manoSel==='derecha'&&modoSel!=='todo')&&modoSel!=='notas';
+  let svg=`<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<g stroke="#111" stroke-width="1">`; for(let i=0;i<5;i++){ const y=40+i*12; svg+=`<line x1="20" y1="${y}" x2="700" y2="${y}"/>`; } svg+=`<path d="M20 40 L20 218" fill="none" stroke-width="2"/></g>`;
+  svg+=`<text x="26" y="95" font-size="42">𝄞</text><text x="60" y="50" font-size="20">♯</text><text x="72" y="74" font-size="20">♯</text><text x="84" y="44" font-size="20">♯</text><text x="96" y="68" font-size="20">♯</text><text x="116" y="65" font-size="20" font-weight="bold">6</text><text x="116" y="85" font-size="20" font-weight="bold">8</text>`;
+  svg+=`<path d="M155 38 Q210 18 265 38" fill="none" stroke="#111" stroke-width="1.2"/><path d="M290 38 Q350 18 410 38" fill="none" stroke="#111" stroke-width="1.2"/><path d="M430 38 Q510 18 600 38" fill="none" stroke="#111" stroke-width="1.2"/>`;
+  if(showMelody){ melody.forEach((o,i)=>{ const x=150+i*21; const y=yTreble(o); const acc=displayAcc(o); svg+=`<g class="staff-note" data-hand="derecha" data-idx="${i}"><ellipse cx="${x}" cy="${y}" rx="6.5" ry="4.8" transform="rotate(-15 ${x} ${y})"/>`; if(y>=64) svg+=`<rect x="${x+5.5}" y="${y-32}" width="1.6" height="32"/>`; else svg+=`<rect x="${x-7}" y="${y}" width="1.6" height="32"/>`; if(acc) svg+=`<text x="${x-16}" y="${y+6}" font-size="16">${acc}</text>`; svg+=`<text x="${x}" y="${y-36}" font-size="9" fill="#d32f2f" text-anchor="middle" font-weight="bold">${i+1}</text></g>`; }); }
+  svg+=`<g stroke="#111" stroke-width="1.2"><line x1="290" y1="40" x2="290" y2="88"/><line x1="440" y1="40" x2="440" y2="88"/><line x1="530" y1="40" x2="530" y2="88"/><line x1="700" y1="40" x2="700" y2="88"/></g>`;
+  svg+=`<g stroke="#111" stroke-width="1">`; for(let i=0;i<5;i++){ const y=170+i*12; svg+=`<line x1="20" y1="${y}" x2="700" y2="${y}"/>`; } svg+=`</g>`;
+  svg+=`<text x="26" y="218" font-size="34">𝄢</text><text x="60" y="180" font-size="18">♯</text><text x="72" y="204" font-size="18">♯</text><text x="84" y="174" font-size="18">♯</text><text x="96" y="198" font-size="18">♯</text><text x="116" y="192" font-size="18" font-weight="bold">6</text><text x="116" y="214" font-size="18" font-weight="bold">8</text><text x="140" y="150" font-size="22" font-style="italic">p</text>`;
+  if(showChords){ leftChords.forEach((ch,ci)=>{ const x0=150+ci*135; ch.forEach((o,ni)=>{ const x=x0+ni*20; const y=yBass(o); const acc=displayAcc(o); svg+=`<g class="staff-note" data-hand="izquierda" data-idx="${ci*6+ni}"><ellipse cx="${x}" cy="${y}" rx="6.5" ry="4.8" transform="rotate(-15 ${x} ${y})"/><rect x="${x-7}" y="${y}" width="1.6" height="28"/>`; if(ni===0) svg+=`<circle cx="${x+12}" cy="${y-3}" r="2" fill="#111"/>`; if(acc) svg+=`<text x="${x-16}" y="${y+6}" font-size="15">${acc}</text>`; svg+=`<text x="${x}" y="${y+22}" font-size="8" fill="#7b1fa2" text-anchor="middle">${noteName(o)}</text></g>`; if(ni===0) svg+=`<text x="${x-14}" y="${y+4}" font-size="16">~</text>`; }); svg+=`<text x="${x0+60}" y="245" font-size="11" text-anchor="middle" fill="#7b1fa2" font-weight="bold">${leftLabels[ci]}</text>`; }); }
+  svg+=`<g id="staffHandGroup" style="display:none"><circle id="staffCircle" cx="0" cy="0" r="15" fill="#ffeb3b" opacity="0.55" stroke="#ff5722" stroke-width="2"/><text id="staffHandText" x="0" y="0" font-size="26" text-anchor="middle">👆</text><text id="staffNumText" x="0" y="0" font-size="12" font-weight="bold" fill="white" text-anchor="middle">1</text></g></svg>`;
+  document.getElementById('staffContainer').innerHTML=svg; attachDrag();
+}
+buildStaff();
+function attachDrag(){
+  document.querySelectorAll('.staff-note').forEach(el=>{
+    let startY=0,startDia=0,dragging=false,hand=el.dataset.hand,idx=parseInt(el.dataset.idx);
+    el.addEventListener('pointerdown',e=>{ e.preventDefault(); dragging=true; startY=e.clientY; const obj=hand==='derecha'?melody[idx]:leftFlat()[idx]; startDia=diatonic(obj); selectNote(hand,idx); el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove',e=>{ if(!dragging) return; const dy=e.clientY-startY; const steps=Math.round(dy/6); const newDia=startDia-steps; const obj=hand==='derecha'?melody[idx]:leftChords[Math.floor(idx/6)][idx%6]; if(newDia===diatonic(obj)) return; const oct=Math.floor(newDia/7); const rem=newDia%7; obj.letter=LETRAS[rem]; obj.oct=oct; if(['F','C','G','D'].includes(obj.letter)) obj.acc='#'; else obj.acc=''; buildStaff(); selectNote(hand,idx,true); toneObj(obj,0.4,0,0.3); });
+    el.addEventListener('pointerup',()=>{ dragging=false; });
+  });
+}
+function selectNote(hand,idx,keep=false){
+  selected={hand,idx}; document.querySelectorAll('.staff-note').forEach(e=>e.classList.remove('selected'));
+  const el=document.querySelector(`.staff-note[data-hand="${hand}"][data-idx="${idx}"]`); if(el) el.classList.add('selected');
+  const obj=hand==='derecha'?melody[idx]:leftFlat()[idx]; const clef=hand==='derecha'?'sol':'fa';
+  document.getElementById('editBox').classList.add('show'); document.getElementById('editNota').textContent=noteName(obj); document.getElementById('editPos').textContent=posName(obj,clef); document.getElementById('editAcc').textContent=accH(obj);
+  document.getElementById('accSharp').classList.toggle('active',obj.acc==='#'); document.getElementById('accFlat').classList.toggle('active',obj.acc==='b'); document.getElementById('accNat').classList.toggle('active',obj.acc==='');
+  const desc=describirNota(obj,clef); document.getElementById('now').textContent='✏️ '+desc; if(!keep){ toneObj(obj,0.5,0,0.3); speak(desc); }
+}
+function setAcc(acc){ if(!selected) return; const obj=selected.hand==='derecha'?melody[selected.idx]:leftChords[Math.floor(selected.idx/6)][selected.idx%6]; obj.acc=acc; buildStaff(); selectNote(selected.hand,selected.idx,true); toneObj(obj,0.6,0,0.3); speak(describirNota(obj,selected.hand==='derecha'?'sol':'fa')); }
+function resetNotes(){ melody=JSON.parse(JSON.stringify(ORIG_MELODY)); leftChords=JSON.parse(JSON.stringify(ORIG_LEFT)); buildStaff(); document.getElementById('editBox').classList.remove('show'); speak('Partitura original restaurada'); }
+function currentList(){ return manoSel==='izquierda'?leftFlat():melody; }
+function playSong(){
+  if(playing) return; playing=true;
+  const desde=parseInt(document.getElementById('desde').value)||1; const hasta=parseInt(document.getElementById('hasta').value)||4;
+  document.getElementById('now').textContent=`🎵 Tocando compás ${desde} al ${hasta} - ${manoSel}`;
+  const playOnce=()=>{
+    let delay=0;
+    if(manoSel!=='izquierda'){ melody.forEach((o,i)=>{ const comp=compases[i]; if(comp<desde||comp>hasta) return; timers.push(setTimeout(()=>{ if(!playing) return; if(modoSel!=='acordes'){ toneObj(o,0.45,0,0.3); if(guiaOn){ guiaIdx=i; updateGuide(); } } }, delay)); delay+=300/speedRate; }); }
+    if(manoSel!=='derecha'){ leftChords.forEach((ch,ci)=>{ const comp=ci+1; if(comp<desde||comp>hasta) return; timers.push(setTimeout(()=>{ if(!playing) return; if(modoSel!=='notas') ch.forEach((o,ni)=>toneObj(o,1.2,ni*0.12,0.15)); }, delay)); delay+=900/speedRate; }); }
+    if(loopOn){ timers.push(setTimeout(()=>{ if(playing) playOnce(); }, delay+500)); } else { timers.push(setTimeout(()=>{ playing=false; }, delay+500)); }
+  };
+  playOnce();
+}
+function toggleGuia(){ guiaOn=!guiaOn; guiaIdx=0; const btn=document.getElementById('btnGuia'); const box=document.getElementById('pasoBox'); btn.textContent=guiaOn?'👆 Desactivar Guía + Voz':'👆 Activar Guía Doble + Voz'; btn.classList.toggle('on',guiaOn); box.classList.toggle('show',guiaOn); if(guiaOn){ document.getElementById('pianoBox').classList.add('show'); document.getElementById('partitura').classList.add('show'); updateGuide(); speak('Guía activada.'); } else { clearGuideBadges(); const hg=document.getElementById('staffHandGroup'); if(hg) hg.style.display='none'; } }
+function clearGuideBadges(){ document.querySelectorAll('.num-badge').forEach(e=>e.remove()); document.querySelectorAll('.hand').forEach(e=>e.remove()); document.querySelectorAll('.key-next').forEach(e=>e.classList.remove('key-next')); }
+function updateGuide(){
+  clearGuideBadges(); const list=currentList(); const obj=list[guiaIdx]; const name=obj.letter+(obj.acc==='#'?'#':obj.acc==='b'?'b':'')+obj.oct; const clef=manoSel==='izquierda'?'fa':'sol';
+  document.querySelectorAll(`[data-note="${name}"]`).forEach(el=>{ if(el.classList.contains('white-key')||el.classList.contains('black-key')){ el.classList.add('key-next'); const h=document.createElement('div'); h.className='hand'; h.textContent='👆'; el.appendChild(h); const b=document.createElement('div'); b.className='num-badge'; b.textContent=guiaIdx+1; el.appendChild(b); } });
+  const staffNote=document.querySelector(`.staff-note[data-hand="${manoSel==='izquierda'?'izquierda':'derecha'}"][data-idx="${guiaIdx}"]`);
+  if(staffNote){ const ellipse=staffNote.querySelector('ellipse'); const cx=ellipse.getAttribute('cx'); const cy=ellipse.getAttribute('cy'); const hg=document.getElementById('staffHandGroup'); if(hg){ hg.style.display='block'; document.getElementById('staffCircle').setAttribute('cx',cx); document.getElementById('staffCircle').setAttribute('cy',cy); document.getElementById('staffHandText').setAttribute('x',cx); document.getElementById('staffHandText').setAttribute('y',cy-22); document.getElementById('staffNumText').setAttribute('x',cx); document.getElementById('staffNumText').setAttribute('y',cy+4); document.getElementById('staffNumText').textContent=guiaIdx+1; } }
+  const desc=describirNota(obj,clef); document.getElementById('pasoNum').textContent=(guiaIdx+1)+' / '+list.length; document.getElementById('pasoNota').textContent=noteName(obj); document.getElementById('pasoCompas').textContent=manoSel==='izquierda'?Math.floor(guiaIdx/6)+1:compases[guiaIdx]; document.getElementById('pasoDedo').textContent='👆 '+desc; document.getElementById('pasoDesc').textContent='🗣️ '+desc; document.getElementById('now').textContent='👆 '+desc; speak(desc);
+}
+function nextGuide(){ const l=currentList(); toneObj(l[guiaIdx],0.8,0,0.3); guiaIdx++; if(guiaIdx>=l.length) guiaIdx=l.length-1; updateGuide(); }
+function prevGuide(){ guiaIdx=Math.max(0,guiaIdx-1); updateGuide(); }
+const pianoEl=document.getElementById('piano');
+const whiteNotes=[]; for(let oct=2; oct<=5; oct++){ ['C','D','E','F','G','A','B'].forEach(l=>whiteNotes.push(l+oct)); }
+const whiteCount=whiteNotes.length; const display={'C':'Do','D':'Re','E':'Mi','F':'Fa','G':'Sol','A':'La','B':'Si'};
+whiteNotes.forEach(note=>{ const base=note.replace(/[0-9]/g,''); const oct=note.replace(/[^0-9]/g,''); const d=document.createElement('div'); d.className='white-key'; d.dataset.note=note; d.textContent=display[base]+oct; d.onclick=()=>{ const o={letter:base,oct:parseInt(oct),acc:''}; toneObj(o,0.9,0,0.3); speak(describirNota(o,'sol')); if(mapeando&&puntoMapeo){ alert('Nota '+noteName(o)+' guardada para el punto de la foto. (En esta demo queda en memoria)'); } if(guiaOn&&note===currentList()[guiaIdx].letter+currentList()[guiaIdx].oct) nextGuide(); }; pianoEl.appendChild(d); });
+let wbMap={}; let wi=0; for(let oct=2; oct<=5; oct++){ ['C','D','E','F','G','A','B'].forEach(l=>{ wbMap[l+oct]=wi; wi++; }); }
+for(let oct=2; oct<=5; oct++){ [['C#'],['D#'],['F#'],['G#'],['A#']].forEach(([s])=>{ const bl=s[0]; const wb=wbMap[bl+oct]; const d=document.createElement('div'); d.className='black-key'; d.dataset.note=s+oct; d.textContent=s; d.style.left=`calc(${((wb+1)*100/whiteCount)}% - 13px)`; d.onclick=(e)=>{ e.stopPropagation(); const o={letter:bl,oct,acc:'#'}; toneObj(o,0.9,0,0.3); speak(describirNota(o,'sol')); }; pianoEl.appendChild(d); }); }
+</script>
+</body>
+</html>
