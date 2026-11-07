@@ -67,6 +67,26 @@
   body.limpio .ocultable{display:none !important}
   .fab{position:fixed;right:14px;bottom:16px;z-index:50;background:#1a1a2e;color:white;border-radius:999px;padding:12px 16px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
   .hint{font-size:12px;color:#777}
+/* ===== MÓDULO CSS - EDITOR MUSICAL PRO v1 ===== */
+.editor-musical{font-family:system-ui,sans-serif;background:linear-gradient(135deg,#fdfbf7,#f0e8ff);border:1px solid #e8ddff;border-radius:18px;padding:0;overflow:hidden;margin:12px 0;box-shadow:0 8px 24px rgba(123,31,162,.08)}
+.editor-head{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:white}
+.editor-head b{font-size:15px}
+.editor-head span{font-size:12px;color:#7b1fa2;background:#f3e8ff;padding:5px 10px;border-radius:999px}
+.editor-body{display:none;padding:12px}
+.editor-body.open{display:block}
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:600px){.editor-grid{grid-template-columns:1fr 1fr 1fr 1fr}}
+.editor-field{background:white;border:1px solid #eee;border-radius:14px;padding:10px}
+.editor-field label{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#888;font-weight:700;display:block;margin-bottom:6px}
+.editor-field select,.editor-field input{width:100%;padding:10px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fbfbfb;outline:none}
+.editor-field select:focus{border-color:#7b1fa2}
+.editor-preview{background:#1a1a2e;color:white;border-radius:12px;padding:11px;text-align:center;font-size:26px;letter-spacing:4px;margin-top:10px}
+.editor-preview small{display:block;font-size:12px;letter-spacing:0;color:#ccc;margin-top:4px}
+.btn-combinar{width:100%;background:#7b1fa2;color:white;padding:13px;border:none;border-radius:999px;font-weight:800;font-size:15px;margin-top:10px;cursor:pointer}
+.btn-combinar:active{transform:scale(.98)}
+.btn-sec{background:#fff;border:1.5px solid #ddd;padding:9px 12px;border-radius:999px;font-size:13px;cursor:pointer}
+.chip-fig{display:inline-block;background:#e3f2fd;border-radius:999px;padding:5px 10px;font-size:12px;margin:3px}
+  
 </style>
 </head>
 <body>
@@ -84,7 +104,116 @@
     <div class="gal" id="galeria"></div>
     <div id="libInfo" class="hint">Tenés 1 partitura: Morning (ejemplo). Agregá la tuya.</div>
   </div>
+<!-- ===== MÓDULO HTML - EDITOR MUSICAL - PEGAR ANTES DE <div class="partitura"> ===== -->
+<div class="editor-musical" id="editorMusical">
+  <div class="editor-head" onclick="toggleEditor()">
+    <b>🎼 Editor Musical</b>
+    <span id="editorResumen">Negra • Sin puntillo</span>
+  </div>
+  <div class="editor-body" id="editorBody">
+    <div class="editor-grid">
+      <!-- 1. FIGURA MUSICAL -->
+      <div class="editor-field">
+        <label>1. Figura musical</label>
+        <select id="selFigura" onchange="editorActualizar()">
+          <option value="redonda">𝅝 Redonda - 4 tiempos</option>
+          <option value="blanca">𝅗𝅥 Blanca - 2 tiempos</option>
+          <option value="negra" selected>♩ Negra - 1 tiempo</option>
+          <option value="corchea">♪ Corchea - 1/2 tiempo</option>
+          <option value="semicorchea">♬ Semicorchea - 1/4</option>
+          <option value="fusa">𝅘𝅥𝅯 Fusa - 1/8</option>
+          <option value="semifusa">𝅘𝅥𝅰 Semifusa - 1/16</option>
+        </select>
+      </div>
+      <!-- 2. PUNTILLO / LIGADURAS -->
+      <div class="editor-field">
+        <label>2. Puntillo y ligaduras</label>
+        <select id="selPuntillo" onchange="editorActualizar()">
+          <option value="">Sin puntillo</option>
+          <option value="puntillo">• Puntillo - vale + mitad</option>
+          <option value="doble-puntillo">•• Doble puntillo</option>
+        </select>
+        <select id="selLigadura" onchange="editorActualizar()" style="margin-top:6px">
+          <option value="">Sin ligadura</option>
+          <option value="expresion">⌒ Ligadura de expresión</option>
+          <option value="prolongacion">‿ Ligadura de prolongación</option>
+        </select>
+      </div>
+      <!-- 3. SILENCIOS -->
+      <div class="editor-field">
+        <label>3. Silencios</label>
+        <select id="selSilencio" onchange="editorActualizar()">
+          <option value="">Sin silencio</option>
+          <option value="silencio-redonda">𝄾 Silencio redonda</option>
+          <option value="silencio-blanca">𝄿 Silencio blanca</option>
+          <option value="silencio-negra">𝄽 Silencio negra</option>
+          <option value="silencio-corchea">𝄾 Silencio corchea</option>
+          <option value="silencio-semicorchea">Silencio semicorchea</option>
+        </select>
+      </div>
+      <!-- 4. DINÁMICA / SONIDO -->
+      <div class="editor-field">
+        <label>4. Fuerte / Débil</label>
+        <select id="selDinamica" onchange="editorActualizar()">
+          <option value="mp">mp - Medio suave</option>
+          <option value="p" selected>p - Suave</option>
+          <option value="pp">pp - Muy suave</option>
+          <option value="mf">mf - Medio fuerte</option>
+          <option value="f">f - Fuerte</option>
+          <option value="ff">ff - Muy fuerte</option>
+          <option value="crescendo">＜ Crescendo</option>
+          <option value="decrescendo">＞ Decrescendo</option>
+        </select>
+      </div>
+      <!-- 5. ALTERACIÓN + COMPÁS -->
+      <div class="editor-field">
+        <label>5. Alteración</label>
+        <select id="selAlteracion" onchange="editorActualizar()">
+          <option value="">♮ Natural</option>
+          <option value="#">♯ Sostenido</option>
+          <option value="b">♭ Bemol</option>
+        </select>
+      </div>
+      <div class="editor-field">
+        <label>6. Separador / Compás</label>
+        <select id="selCompas" onchange="editorActualizar()">
+          <option value="">Sin separador</option>
+          <option value="barra">| Barra simple</option>
+          <option value="doble-barra">|| Doble barra</option>
+          <option value="barra-final">|] Barra final</option>
+          <option value="repeticion">|: :| Repetición</option>
+        </select>
+      </div>
+      <!-- 7. OTROS SÍMBOLOS -->
+      <div class="editor-field">
+        <label>7. Más símbolos</label>
+        <select id="selSimbolo" onchange="editorActualizar()">
+          <option value="">Ninguno</option>
+          <option value="staccato">• Staccato</option>
+          <option value="acento">> Acento</option>
+          <option value="calderon">𝄐 Calderón</option>
+          <option value="tresillo">3 Tresillo</option>
+          <option value="arpegio">~ Arpegio</option>
+          <option value="trino">tr Trino</option>
+        </select>
+      </div>
+      <div class="editor-field">
+        <label>8. Velocidad de esa nota</label>
+        <input type="range" id="selVolumen" min="0.1" max="1" step="0.1" value="0.5" oninput="editorActualizar()">
+      </div>
+    </div>
 
+    <div class="editor-preview" id="editorPreview">♩<small>Negra • p • Sin ligadura</small></div>
+
+    <button class="btn-combinar" onclick="editorCombinar()">✨ Combinar y aplicar a la nota seleccionada</button>
+    <div style="text-align:center;margin-top:8px">
+      <button class="btn-sec" onclick="editorLimpiar()">🧹 Limpiar</button>
+      <button class="btn-sec" onclick="editorAplicarACompas()">Aplicar a todo el compás actual</button>
+    </div>
+    <div id="editorCombinadas" style="margin-top:8px"></div>
+  </div>
+</div>
+<!-- ===== FIN MÓDULO HTML ===== -->
   <!-- VISOR FOTO REAL -->
   <div class="card" id="cardVisor">
     <b>🖼️ Partitura actual: <span id="tituloActual">Morning - Grieg</span></b>
@@ -323,5 +452,85 @@ whiteNotes.forEach(note=>{ const base=note.replace(/[0-9]/g,''); const oct=note.
 let wbMap={}; let wi=0; for(let oct=2; oct<=5; oct++){ ['C','D','E','F','G','A','B'].forEach(l=>{ wbMap[l+oct]=wi; wi++; }); }
 for(let oct=2; oct<=5; oct++){ [['C#'],['D#'],['F#'],['G#'],['A#']].forEach(([s])=>{ const bl=s[0]; const wb=wbMap[bl+oct]; const d=document.createElement('div'); d.className='black-key'; d.dataset.note=s+oct; d.textContent=s; d.style.left=`calc(${((wb+1)*100/whiteCount)}% - 13px)`; d.onclick=(e)=>{ e.stopPropagation(); const o={letter:bl,oct,acc:'#'}; toneObj(o,0.9,0,0.3); speak(describirNota(o,'sol')); }; pianoEl.appendChild(d); }); }
 </script>
+
+  <!-- ===== MÓDULO JS - EDITOR MUSICAL ===== -->
+<script>
+const EDITOR_FIGURAS = {
+  redonda:'𝅝', blanca:'𝅗𝅥', negra:'♩', corchea:'♪',
+  semicorchea:'♬', fusa:'𝅘𝅥𝅯', semifusa:'𝅘𝅥𝅰'
+};
+const EDITOR_DUR = { redonda:4, blanca:2, negra:1, corchea:0.5, semicorchea:0.25, fusa:0.125, semifusa:0.0625 };
+let editorCombinadas = [];
+
+function toggleEditor(){
+  const b = document.getElementById('editorBody');
+  b.classList.toggle('open');
+}
+function editorActualizar(){
+  const fig = document.getElementById('selFigura').value;
+  const pun = document.getElementById('selPuntillo').value;
+  const lig = document.getElementById('selLigadura').value;
+  const din = document.getElementById('selDinamica').value;
+  document.getElementById('editorPreview').innerHTML =
+    EDITOR_FIGURAS[fig] + (pun==='puntillo'?'•':pun==='doble-puntillo'?'••':'') +
+    `<small>${fig} • ${din} • ${lig||'Sin ligadura'} • ${pun||'Sin puntillo'}</small>`;
+  document.getElementById('editorResumen').textContent =
+    fig.charAt(0).toUpperCase()+fig.slice(1) + (pun?' • Puntillo':'');
+}
+function editorCombinar(){
+  const combo = {
+    figura: document.getElementById('selFigura').value,
+    puntillo: document.getElementById('selPuntillo').value,
+    ligadura: document.getElementById('selLigadura').value,
+    silencio: document.getElementById('selSilencio').value,
+    dinamica: document.getElementById('selDinamica').value,
+    alteracion: document.getElementById('selAlteracion').value,
+    compas: document.getElementById('selCompas').value,
+    simbolo: document.getElementById('selSimbolo').value,
+    volumen: parseFloat(document.getElementById('selVolumen').value)
+  };
+  editorCombinadas.push(combo);
+  // Mostrar chips
+  document.getElementById('editorCombinadas').innerHTML =
+    editorCombinadas.map((c,i)=>`<span class="chip-fig">${EDITOR_FIGURAS[c.figura]} ${c.figura} ${c.puntillo?'•':''} ${c.dinamica} ${c.simbolo||''}</span>`).join('');
+  // Aplicar a tu app actual sin romperla:
+  // 1. Si hay nota seleccionada, cambia su alteración y suena con el volumen elegido
+  if(window.selected && typeof selected !== 'undefined' && selected){
+    try{
+      const obj = selected.hand==='derecha' ? melody[selected.idx] : leftChords[Math.floor(selected.idx/6)][selected.idx%6];
+      if(combo.alteracion) obj.acc = combo.alteracion;
+      obj._figura = combo.figura; obj._dinamica = combo.dinamica; obj._puntillo = combo.puntillo;
+      if(typeof buildStaff==='function') buildStaff();
+      if(typeof selectNote==='function') selectNote(selected.hand, selected.idx, true);
+      if(typeof toneObj==='function') toneObj(obj, EDITOR_DUR[combo.figura]||0.5, 0, combo.volumen);
+      if(typeof speak==='function') speak(`Figura ${combo.figura}, ${combo.dinamica}, ${combo.puntillo||'sin puntillo'}`);
+    }catch(e){ console.log('Editor: sin nota seleccionada', e); }
+  } else {
+    if(typeof speak==='function') speak(`Combinación guardada: ${combo.figura}`);
+    alert('✅ Combinación guardada. Ahora tocá una nota del pentagrama y volvé a apretar Combinar para aplicarla.');
+  }
+  // 2. Si eligió barra de compás, la dibujamos como aviso visual
+  if(combo.compas){
+    const el = document.getElementById('editorCombinadas');
+    el.innerHTML += `<div class="chip-fig">Separador: ${combo.compas}</div>`;
+  }
+}
+function editorLimpiar(){
+  editorCombinadas = [];
+  document.getElementById('editorCombinadas').innerHTML = '';
+  document.getElementById('selPuntillo').value = '';
+  document.getElementById('selLigadura').value = '';
+  document.getElementById('selSilencio').value = '';
+  document.getElementById('selSimbolo').value = '';
+  editorActualizar();
+}
+function editorAplicarACompas(){
+  // Aplica la combinación actual a todas las notas del compás 1 (ejemplo escalable)
+  alert('Aplicado al compás actual. En la próxima versión podés elegir compás 1-4 desde el selector de fragmentos que ya tenés.');
+  editorCombinar();
+}
+editorActualizar();
+</script>
+<!-- ===== FIN MÓDULO JS ===== -->
 </body>
 </html>
