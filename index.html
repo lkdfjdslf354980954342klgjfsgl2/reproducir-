@@ -86,8 +86,16 @@
 .btn-combinar:active{transform:scale(.98)}
 .btn-sec{background:#fff;border:1.5px solid #ddd;padding:9px 12px;border-radius:999px;font-size:13px;cursor:pointer}
 .chip-fig{display:inline-block;background:#e3f2fd;border-radius:999px;padding:5px 10px;font-size:12px;margin:3px}
-  
+
+  .figBtn{padding:8px 10px;border-radius:10px;border:2px solid #ccc;background:#fff;cursor:pointer;font-weight:700}
+.figBtn.activo{background:#FFD700;border-color:#000}
+.notaPent{font-size:38px;line-height:1;text-align:center;transition:.3s}
+.notaPent.brilla{transform:scale(1.4)}
+.teclaC{width:44px;height:90px;background:#fff;border:2px solid #000;border-radius:0 0 8px 8px;display:flex;align-items:flex-end;justify-content:center;font-weight:800;padding-bottom:6px}
+.teclaC.brilla{background:#FFD700 !important;transform:translateY(4px)}
+.teclaC.sostenido{background:#111;color:#fff}
 </style>
+  
 </head>
 <body>
 <header><div><h1>🎹 Mi Piano</h1><p>Morning + Tus fotos • GitHub Pages</p></div><button onclick="toggleLimpio()" id="btnLimpio">👁️ Ocultar botones</button></header>
@@ -531,6 +539,141 @@ function editorAplicarACompas(){
 }
 editorActualizar();
 </script>
-<!-- ===== FIN MÓDULO JS ===== -->
+<script>
+// ===== CIRCULO DE QUINTAS - DATOS CORRECTOS =====
+const CIRCULO = [
+ {mayor:"C", menor:"Am", alt:"0", color:"#2EB5A5", notas:["Do","Re","Mi","Fa","Sol","La","Si","Do"], freq:[261.6,293.7,329.6,349.2,392,440,493.9,523.3], habla:"Do Mayor no tiene sostenidos ni bemoles. Su relativa menor es La menor."},
+ {mayor:"G", menor:"Em", alt:"1# Fa#", color:"#3ECB6A", notas:["Sol","La","Si","Do","Re","Mi","Fa#","Sol"], freq:[392,440,493.9,523.3,587.3,659.3,740,784], habla:"Sol Mayor tiene 1 sostenido: Fa#. Su relativa menor es Mi menor."},
+ {mayor:"D", menor:"Bm", alt:"2# Fa# Do#", color:"#8ED94A", notas:["Re","Mi","Fa#","Sol","La","Si","Do#","Re"], freq:[293.7,329.6,370,392,440,493.9,554.4,587.3], habla:"Re Mayor tiene 2 sostenidos: Fa# y Do#. Su relativa menor es Si menor."},
+ {mayor:"A", menor:"F#m", alt:"3# Fa# Do# Sol#", color:"#FFD93D", notas:["La","Si","Do#","Re","Mi","Fa#","Sol#","La"], freq:[440,493.9,554.4,587.3,659.3,740,830.6,880], habla:"La Mayor tiene 3 sostenidos: Fa#, Do# y Sol#. Su relativa menor es Fa# menor. La está en 2º espacio, Si en 3º línea, Do# en 3º espacio con sostenido, Re en 4º línea, Mi en 4º espacio, Fa# en 5º línea con sostenido, Sol# arriba de la 5º línea con sostenido, La cierra la escala."},
+ {mayor:"E", menor:"C#m", alt:"4#", color:"#FFB800", notas:["Mi","Fa#","Sol#","La","Si","Do#","Re#","Mi"], freq:[329.6,370,415.3,440,493.9,554.4,622.3,659.3], habla:"Mi Mayor tiene 4 sostenidos: Fa#, Do#, Sol# y Re#. Su relativa menor es Do# menor."},
+ {mayor:"B", menor:"G#m", alt:"5#", color:"#FF8A00", notas:["Si","Do#","Re#","Mi","Fa#","Sol#","La#","Si"], freq:[493.9,554.4,622.3,659.3,740,830.6,932.3,987.8], habla:"Si Mayor tiene 5 sostenidos. Su relativa menor es Sol# menor."},
+ {mayor:"Gb / F#", menor:"Ebm / D#m", alt:"6b / 6#", color:"#FF6B00", notas:["Solb","Lab","Sib","Dob","Reb","Mib","Fa","Solb"], freq:[370,415.3,466.2,277.2,311.1,311.1,349.2,370], habla:"Solb Mayor tiene 6 bemoles. Fa# Mayor tiene 6 sostenidos. Son enarmónicas."},
+ {mayor:"Db", menor:"Bbm", alt:"5b", color:"#FF3B30", notas:["Reb","Mib","Fa","Solb","Lab","Sib","Do","Reb"], freq:[277.2,311.1,349.2,370,415.3,466.2,523.3,554.4], habla:"Reb Mayor tiene 5 bemoles: Sib, Mib, Lab, Reb y Solb. Su relativa menor es Sib menor."},
+ {mayor:"Ab", menor:"Fm", alt:"4b", color:"#E93E8A", notas:["Lab","Sib","Do","Reb","Mib","Fa","Sol","Lab"], freq:[415.3,466.2,523.3,554.4,622.3,659.3,784,830.6], habla:"Lab Mayor tiene 4 bemoles: Sib, Mib, Lab y Reb. Su relativa menor es Fa menor."},
+ {mayor:"Eb", menor:"Cm", alt:"3b", color:"#9B59B6", notas:["Mib","Fa","Sol","Lab","Sib","Do","Re","Mib"], freq:[311.1,349.2,392,415.3,466.2,523.3,587.3,622.3], habla:"Mib Mayor tiene 3 bemoles: Sib, Mib y Lab. Su relativa menor es Do menor."},
+ {mayor:"Bb", menor:"Gm", alt:"2b", color:"#7B61FF", notas:["Sib","Do","Re","Mib","Fa","Sol","La","Sib"], freq:[466.2,523.3,587.3,622.3,698.5,784,880,932.3], habla:"Sib Mayor tiene 2 bemoles: Sib y Mib. Su relativa menor es Sol menor."},
+ {mayor:"F", menor:"Dm", alt:"1b Sib", color:"#2E86FF", notas:["Fa","Sol","La","Sib","Do","Re","Mi","Fa"], freq:[349.2,392,440,466.2,523.3,587.3,659.3,698.5], habla:"Fa Mayor tiene 1 bemol: Sib. Su relativa menor es Re menor."},
+];
+let figuraActual = "♩";
+let tonalidadActual = CIRCULO[3];
+let audioCtx = null;
+
+function setFigura(f){ figuraActual=f; document.querySelectorAll('.figBtn').forEach(b=>b.classList.remove('activo')); event.target.classList.add('activo'); mostrarEscala(); }
+function abrirCirculo(){ document.getElementById('pantallaCirculo').style.display='block'; }
+function cerrarCirculo(){ document.getElementById('pantallaCirculo').style.display='none'; }
+document.getElementById('btnCirculo').onclick = abrirCirculo;
+
+// Crear botones del circulo
+const cont = document.getElementById('circuloBtns');
+CIRCULO.forEach((t,i)=>{
+  const b=document.createElement('button');
+  b.style.cssText=`padding:14px;border:none;border-radius:16px;background:${t.color};color:#fff;font-weight:900;font-size:16px;cursor:pointer`;
+  b.innerHTML=`${t.mayor}<br><small>${t.alt} • ${t.menor}</small>`;
+  b.onclick=()=>seleccionar(i);
+  cont.appendChild(b);
+});
+
+function seleccionar(i){
+  tonalidadActual=CIRCULO[i];
+  document.getElementById('detalleEscala').style.display='block';
+  document.getElementById('tituloEscala').textContent=`Escala de ${tonalidadActual.mayor==="C"?"Do":tonalidadActual.mayor==="G"?"Sol":tonalidadActual.mayor==="D"?"Re":tonalidadActual.mayor==="A"?"La":tonalidadActual.mayor==="E"?"Mi":tonalidadActual.mayor==="B"?"Si":tonalidadActual.mayor} Mayor: ${tonalidadActual.notas.join(" - ")}`;
+  document.getElementById('subEscala').textContent=`${tonalidadActual.alt} • Relativa menor: ${tonalidadActual.menor}`;
+  document.getElementById('hablaEscala').textContent="🗣️ "+tonalidadActual.habla;
+  mostrarEscala();
+  document.getElementById('detalleEscala').scrollIntoView({behavior:'smooth'});
+  if('speechSynthesis' in window){ speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(tonalidadActual.habla)); }
+}
+
+function mostrarEscala(){
+  const pent=document.getElementById('pentagrama'); pent.innerHTML='';
+  const colores=["#FF6B00","#FFB800","#FFD93D","#3ECB6A","#2EB5A5","#2E86FF","#7B61FF","#E93E8A"];
+  tonalidadActual.notas.forEach((n,idx)=>{
+    const d=document.createElement('div'); d.className='notaPent'; d.id='nota-'+idx;
+    d.innerHTML=`<div style="color:${colores[idx]}">${figuraActual}</div><div style="font-size:13px;font-weight:800">${n}<br>${idx+1}</div>`;
+    d.onclick=()=>sonarNota(idx); pent.appendChild(d);
+  });
+  document.getElementById('numerosEscala').textContent=tonalidadActual.notas.map((n,i)=>`${i+1}=${n}`).join("  •  ");
+  // Piano
+  const piano=document.getElementById('pianoCirculo'); piano.innerHTML='';
+  tonalidadActual.notas.forEach((n,idx)=>{
+    const t=document.createElement('div'); t.className='teclaC'+(n.includes('#')||n.includes('b')?' sostenido':''); t.id='tecla-'+idx; t.textContent=n; t.onclick=()=>sonarNota(idx); piano.appendChild(t);
+  });
+}
+
+function sonarNota(idx){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.frequency.value=tonalidadActual.freq[idx]; o.type='sine'; g.gain.value=0.25;
+  o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.8);
+  document.querySelectorAll('.notaPent').forEach(e=>e.classList.remove('brilla'));
+  document.querySelectorAll('.teclaC').forEach(e=>e.classList.remove('brilla'));
+  const np=document.getElementById('nota-'+idx); if(np) np.classList.add('brilla');
+  const tc=document.getElementById('tecla-'+idx); if(tc) tc.classList.add('brilla');
+}
+
+function reproducirEscala(){ tonalidadActual.notas.forEach((_,i)=>setTimeout(()=>sonarNota(i), i*700)); }
+function escucharEscala(){ reproducirEscala(); if('speechSynthesis' in window) speechSynthesis.speak(new SpeechSynthesisUtterance("Escala de "+tonalidadActual.notas.join(", "))); }
+seleccionar(3); // Empieza en La Mayor como ejemplo
+</script>
+  
+<!-- ====
+  = FIN MÓDULO JS ===== -->
+ <!-- ===== BOTON CIRCULO DE QUINTAS ===== -->
+<button id="btnCirculo" style="width:100%;padding:16px;border:none;border-radius:20px;background:linear-gradient(90deg,#FFD700,#FF9800);font-size:20px;font-weight:900;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.3)">🎵 CÍRCULO DE QUINTAS - Tócalo para extender</button>
+
+<!-- ===== PANTALLA COMPLETA CIRCULO ===== -->
+<div id="pantallaCirculo" style="display:none;position:fixed;inset:0;background:#EAF6FF;z-index:9999;overflow:auto;padding:12px">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h2 style="margin:0">🎵 CÍRCULO DE QUINTAS</h2>
+    <button onclick="cerrarCirculo()" style="font-size:22px;border:none;background:#fff;border-radius:50%;width:44px;height:44px;cursor:pointer">✕</button>
+  </div>
+  <p style="text-align:center;font-weight:700">Tocá una tonalidad. Cada sector ocupa pantalla completa.</p>
+
+  <!-- CIRCULO -->
+  <div id="circuloBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:600px;margin:0 auto"></div>
+
+  <!-- DETALLE ESCALA - PANTALLA COMPLETA INTERNA -->
+  <div id="detalleEscala" style="display:none;background:#0B1026;color:#fff;border-radius:20px;padding:14px;margin-top:14px">
+    <h3 id="tituloEscala" style="text-align:center;margin:4px 0;color:#FFD700"></h3>
+    <p id="subEscala" style="text-align:center;margin:0"></p>
+
+    <div style="text-align:center;margin:12px 0">
+      <b>Figura:</b>
+      <button onclick="setFigura('𝅗𝅥')" class="figBtn">Redonda 𝅗𝅥</button>
+      <button onclick="setFigura('♩')" class="figBtn">Negra ♩</button>
+      <button onclick="setFigura('♪')" class="figBtn">Corchea ♪</button>
+      <button onclick="setFigura('♫')" class="figBtn">Doble ♫</button>
+    </div>
+
+    <!-- PENTAGRAMA -->
+    <div style="background:#fff;border-radius:14px;padding:10px;color:#000">
+      <div style="text-align:center;font-weight:800">📄 Partitura Vacía → ahora completa</div>
+      <div id="pentagrama" style="display:flex;justify-content:space-around;align-items:flex-end;min-height:110px;border-top:2px solid #000;border-bottom:2px solid #000;margin:10px 0;padding:10px 0;position:relative"></div>
+      <div id="numerosEscala" style="text-align:center;font-weight:700"></div>
+    </div>
+
+    <!-- PIANO -->
+    <div style="background:#fff;border-radius:14px;padding:10px;margin-top:10px;color:#000">
+      <div style="text-align:center;font-weight:800">🎹 Piano - brilla al sonar</div>
+      <div id="pianoCirculo" style="display:flex;justify-content:center;gap:2px;margin-top:8px;flex-wrap:wrap"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <button onclick="reproducirEscala()" style="padding:14px;border:none;border-radius:14px;background:#22C55E;color:#fff;font-weight:900;font-size:16px">▶ Reproducir</button>
+      <button onclick="escucharEscala()" style="padding:14px;border:none;border-radius:14px;background:#F97316;color:#fff;font-weight:900;font-size:16px">🎧 Escuchar</button>
+      <button onclick="alert('Editor Musical: tocá una nota del pentagrama para cambiar su figura')" style="padding:14px;border:none;border-radius:14px;background:#8B5CF6;color:#fff;font-weight:900">✏️ Editor Musical</button>
+      <button onclick="document.getElementById('pianoCirculo').scrollIntoView({behavior:'smooth'})" style="padding:14px;border:none;border-radius:14px;background:#3B82F6;color:#fff;font-weight:900">🎹 Teclado</button>
+    </div>
+    <p id="hablaEscala" style="text-align:center;background:#FFF3CD;color:#000;padding:10px;border-radius:10px;margin-top:12px"></p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:600px;margin:16px auto">
+    <button style="padding:14px;border:none;border-radius:14px;background:#0EA5A5;color:#fff;font-weight:800">📄 Partitura Vacía</button>
+    <button style="padding:14px;border:none;border-radius:14px;background:#22C55E;color:#fff;font-weight:800">✏️ Editor Musical</button>
+    <button style="padding:14px;border:none;border-radius:14px;background:#7C3AED;color:#fff;font-weight:800">🎹 Teclado</button>
+    <button onclick="escucharEscala()" style="padding:14px;border:none;border-radius:14px;background:#F97316;color:#fff;font-weight:800">🎧 Escuchar</button>
+  </div>
+</div> 
 </body>
 </html>
